@@ -17,8 +17,14 @@ COPY . .
 # Create instance directory
 RUN mkdir -p instance
 
+# Make init_db.py executable
+RUN chmod +x init_db.py
+
 # Expose port
 EXPOSE $PORT
 
-# Run the application
-CMD gunicorn --bind 0.0.0.0:$PORT app:app
+# Make startup script executable
+RUN chmod +x start.sh
+
+# Run startup script
+CMD ["./start.sh"]

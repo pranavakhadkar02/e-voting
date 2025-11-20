@@ -86,6 +86,26 @@ class Vote(db.Model):
     candidate_id = db.Column(db.Integer, db.ForeignKey('candidate.id'), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
+# Initialize database tables (runs when app is imported)
+try:
+    with app.app_context():
+        db.create_all()
+        # Create default admin user if none exists and in production
+        if not User.query.filter_by(is_admin=True).first():
+            admin_email = os.getenv('ADMIN_EMAIL', 'admin@evoting.com')
+            admin_password = os.getenv('ADMIN_PASSWORD', 'admin123')
+            admin_user = User(
+                email=admin_email,
+                password_hash=generate_password_hash(admin_password),
+                is_verified=True,
+                is_admin=True
+            )
+            db.session.add(admin_user)
+            db.session.commit()
+            print(f"Database initialized with admin user: {admin_email}")
+except Exception as e:
+    print(f"Database initialization warning: {e}")
+
 # Utility functions
 def is_valid_email(email):
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
