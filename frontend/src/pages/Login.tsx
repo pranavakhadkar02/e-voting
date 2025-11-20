@@ -19,7 +19,13 @@ const Login: React.FC = () => {
       const response = await authAPI.login(email, password);
       login(response.user, response.access_token);
       toast.success('Login successful!');
-      navigate('/vote');
+
+      // Redirect admin users to admin dashboard, regular users to voting page
+      if (response.user.is_admin) {
+        navigate('/admin');
+      } else {
+        navigate('/vote');
+      }
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Login failed';
       toast.error(errorMessage);

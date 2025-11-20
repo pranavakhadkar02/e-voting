@@ -183,7 +183,7 @@ def verify_otp():
     db.session.commit()
     
     # Create access token
-    access_token = create_access_token(identity=user.id)
+    access_token = create_access_token(identity=str(user.id))
     
     return jsonify({
         'message': 'Email verified successfully',
@@ -214,9 +214,9 @@ def login():
     
     if not user.is_verified:
         return jsonify({'error': 'Email not verified. Please verify your email first.'}), 401
-    
-    access_token = create_access_token(identity=user.id)
-    
+
+    access_token = create_access_token(identity=str(user.id))
+
     return jsonify({
         'message': 'Login successful',
         'access_token': access_token,
@@ -262,7 +262,7 @@ def resend_otp():
 @jwt_required()
 def get_candidates():
     try:
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         user = User.query.get(user_id)
         
         if not user or not user.is_verified:
@@ -292,7 +292,7 @@ def get_candidates():
 @jwt_required()
 @limiter.limit("1 per minute")
 def cast_vote():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     
     if not user or not user.is_verified:
@@ -330,7 +330,7 @@ def cast_vote():
 @jwt_required()
 def get_results():
     try:
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         user = User.query.get(user_id)
         
         if not user or not user.is_admin:
@@ -363,7 +363,7 @@ def get_results():
 @jwt_required()
 def add_candidate():
     try:
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         user = User.query.get(user_id)
         
         if not user or not user.is_admin:
@@ -393,7 +393,7 @@ def add_candidate():
 @jwt_required()
 def get_all_candidates():
     try:
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         user = User.query.get(user_id)
         
         if not user or not user.is_admin:
@@ -420,7 +420,7 @@ def get_all_candidates():
 @app.route('/api/user/profile', methods=['GET'])
 @jwt_required()
 def get_profile():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     
     if not user:
