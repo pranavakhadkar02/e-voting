@@ -8,7 +8,7 @@ const Vote: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState(false);
 
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
 
   useEffect(() => {
     fetchCandidates();
@@ -42,7 +42,7 @@ const Vote: React.FC = () => {
       await votingAPI.castVote(candidateId);
       toast.success('Vote cast successfully!');
       // Update user state to reflect that they have voted
-      window.location.reload();
+      updateUser({ has_voted: true });
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Failed to cast vote');
     } finally {
