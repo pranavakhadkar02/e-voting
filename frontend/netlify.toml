@@ -1,0 +1,12 @@
+# Netlify deployment configuration
+[build]
+  publish = "build"
+  command = "npm run build"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[build.environment]
+  REACT_APP_API_URL = "PLACEHOLDER_BACKEND_URL"

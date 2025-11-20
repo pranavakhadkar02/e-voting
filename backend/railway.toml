@@ -1,0 +1,14 @@
+# Railway deployment configuration
+services:
+  web:
+    build:
+      dockerfile: Dockerfile
+    environment:
+      PORT: ${{ PORT }}
+      DATABASE_URL: ${{ DATABASE_URL }}
+      SECRET_KEY: ${{ SECRET_KEY }}
+      JWT_SECRET_KEY: ${{ JWT_SECRET_KEY }}
+      MAIL_SERVER: ${{ MAIL_SERVER }}
+      MAIL_PORT: ${{ MAIL_PORT }}
+      MAIL_USERNAME: ${{ MAIL_USERNAME }}
+      MAIL_PASSWORD: ${{ MAIL_PASSWORD }}

@@ -19,7 +19,11 @@ app = Flask(__name__)
 
 # Configuration
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-this')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///evoting.db')
+database_url = os.getenv('DATABASE_URL', 'sqlite:///evoting.db')
+# Fix postgres URL for SQLAlchemy 1.4+
+if database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'jwt-secret-change-this')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
@@ -112,6 +116,35 @@ def send_otp_email(email, otp):
         return False
 
 # Routes
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint for deployment monitoring"""
+    try:
+        # Test database connection
+        db.session.execute('SELECT 1')
+        return jsonify({
+            'status': 'healthy',
+            'message': 'E-Voting API is running',
+            'timestamp': datetime.now(timezone.utc).isoformat()
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'message': 'Database connection failed',
+            'error': str(e),
+            'timestamp': datetime.now(timezone.utc).isoformat()
+        }), 503
+
+@app.route('/api/health', methods=['GET'])
+def api_health_check():
+    """API health check endpoint"""
+    return jsonify({
+        'status': 'healthy',
+        'message': 'E-Voting API is running',
+        'version': '1.0.0',
+        'timestamp': datetime.now(timezone.utc).isoformat()
+    }), 200
+
 @app.route('/api/register', methods=['POST'])
 @limiter.limit("5 per minute")
 def register():
@@ -516,4 +549,6 @@ def init_db():
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True, port=5000)
+    port = int(os.getenv('PORT', 5000))
+    debug = os.getenv('FLASK_ENV') == 'development'
+    app.run(debug=debug, host='0.0.0.0', port=port)
