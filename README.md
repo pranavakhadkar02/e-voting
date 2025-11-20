@@ -1,6 +1,14 @@
-# E-Voting System
+# 🗳️ E-Voting System
+
+[![GitHub license](https://img.shields.io/github/license/pranavakhadkar02/e-voting)](https://github.com/pranavakhadkar02/e-voting/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/pranavakhadkar02/e-voting)](https://github.com/pranavakhadkar02/e-voting/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/pranavakhadkar02/e-voting)](https://github.com/pranavakhadkar02/e-voting/issues)
+[![GitHub forks](https://img.shields.io/github/forks/pranavakhadkar02/e-voting)](https://github.com/pranavakhadkar02/e-voting/network)
 
 A secure, modern e-voting application built with React frontend and Python Flask backend.
+
+> 🚀 **Live Demo**: [Coming Soon]  
+> 📖 **Documentation**: [Setup Guide](SETUP.md) | [Contributing](CONTRIBUTING.md)
 
 ## Features
 
@@ -255,18 +263,35 @@ The app uses SQLite by default. To switch to PostgreSQL:
 - Check file permissions
 - Verify SQLite installation
 
-## Contributing
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
 1. Fork the repository
-2. Create feature branch
-3. Make changes
-4. Test thoroughly
-5. Submit pull request
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Make changes and test thoroughly
+4. Commit your changes (`git commit -m 'Add: amazing feature'`)
+5. Push to the branch (`git push origin feature/amazing-feature`)
+6. Open a Pull Request
 
-## License
+## 📄 License
 
-This project is open source and available under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built with modern web technologies
+- Inspired by the need for secure digital voting
+- Thanks to the open-source community
+
+## 📞 Support
+
+- 🐛 **Found a bug?** [Report it](https://github.com/pranavakhadkar02/e-voting/issues/new?template=bug_report.yml)
+- 💡 **Have an idea?** [Request a feature](https://github.com/pranavakhadkar02/e-voting/issues/new?template=feature_request.yml)
+- ❓ **Need help?** [Start a discussion](https://github.com/pranavakhadkar02/e-voting/discussions)
 
 ---
 
-Built with ❤️ using React and Flask
+⭐ **Star this repository** if you find it useful!
+
+Built with ❤️ using React and Flask by [Pranav Akhadkar](https://github.com/pranavakhadkar02)
