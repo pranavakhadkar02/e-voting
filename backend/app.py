@@ -11,11 +11,26 @@ import secrets
 import os
 from dotenv import load_dotenv
 import re
+import logging
+from logging.handlers import RotatingFileHandler
 
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
+
+# Configure logging
+if not app.debug:
+    if not os.path.exists('logs'):
+        os.mkdir('logs')
+    file_handler = RotatingFileHandler('logs/evoting.log', maxBytes=10240,
+                                       backupCount=10)
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
+    file_handler.setLevel(logging.INFO)
+    app.logger.addHandler(file_handler)
+    app.logger.setLevel(logging.INFO)
+    app.logger.info('E-Voting System startup')
 
 # Configuration
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-this')
@@ -34,7 +49,15 @@ app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
-app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', os.getenv('MAIL_USERNAME'))
+
+# Validate mail configuration
+if not app.config['MAIL_USERNAME'] or not app.config['MAIL_PASSWORD']:
+    app.logger.warning('Mail credentials not configured. Email functionality will be disabled.')
+    MAIL_ENABLED = False
+else:
+    MAIL_ENABLED = True
+    app.logger.info(f'Mail configured with server: {app.config["MAIL_SERVER"]}:{app.config["MAIL_PORT"]}')
 
 # Initialize extensions
 db = SQLAlchemy(app)
@@ -115,6 +138,10 @@ def generate_otp():
     return str(secrets.randbelow(900000) + 100000)
 
 def send_otp_email(email, otp):
+    if not MAIL_ENABLED:
+        app.logger.error('Mail not configured - cannot send OTP email')
+        return False
+    
     try:
         msg = Message(
             'E-Voting OTP Verification',
@@ -130,9 +157,10 @@ def send_otp_email(email, otp):
         If you didn't request this, please ignore this email.
         '''
         mail.send(msg)
+        app.logger.info(f'OTP email sent successfully to {email}')
         return True
     except Exception as e:
-        print(f"Error sending email: {e}")
+        app.logger.error(f'Error sending email to {email}: {str(e)}')
         return False
 
 # Routes
@@ -158,10 +186,13 @@ def health_check():
 @app.route('/api/health', methods=['GET'])
 def api_health_check():
     """API health check endpoint"""
+    mail_status = 'configured' if MAIL_ENABLED else 'not configured'
     return jsonify({
         'status': 'healthy',
         'message': 'E-Voting API is running',
         'version': '1.0.0',
+        'mail': mail_status,
+        'mail_server': app.config.get('MAIL_SERVER', 'not set'),
         'timestamp': datetime.now(timezone.utc).isoformat()
     }), 200
 

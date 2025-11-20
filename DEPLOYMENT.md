@@ -2,67 +2,20 @@
 
 ## Free Cloud Deployment Options
 
-### Option 1: Railway (Recommended for Backend) + Vercel (Frontend)
+### Render (Full Stack) ⭐ **CURRENTLY DEPLOYED**
 
-#### Backend Deployment on Railway
+**🚨 IMMEDIATE ACTION REQUIRED for Mail Issues:**
 
-1. **Sign up at [Railway](https://railway.app/)**
+If you're experiencing 502 errors and mail not sending:
 
-   - Connect your GitHub account
-
-2. **Create a new project**
-
-   - Click "New Project" → "Deploy from GitHub repo"
-   - Select your e-voting repository
-   - Choose the `backend` folder as the root directory
-
-3. **Configure Environment Variables**
-   Go to your project settings and add these environment variables:
-
-   ```
-   SECRET_KEY=your-very-secure-secret-key-here-make-it-long-and-random
-   JWT_SECRET_KEY=your-jwt-secret-key-here-also-long-and-random
-   FLASK_ENV=production
-   MAIL_SERVER=smtp.gmail.com
-   MAIL_PORT=587
-   MAIL_USERNAME=your-email@gmail.com
-   MAIL_PASSWORD=your-gmail-app-password
-   MAIL_DEFAULT_SENDER=your-email@gmail.com
-   ```
-
-4. **Add Database**
-
-   - In Railway dashboard, click "New" → "Database" → "PostgreSQL"
-   - Railway will automatically set the `DATABASE_URL` environment variable
-
-5. **Deploy**
-   - Railway will automatically deploy when you push to your main branch
-   - Your backend will be available at `https://your-app-name.railway.app`
-
-#### Frontend Deployment on Vercel
-
-1. **Sign up at [Vercel](https://vercel.com/)**
-
-   - Connect your GitHub account
-
-2. **Create a new project**
-
-   - Click "New Project"
-   - Import your e-voting repository
-   - Set root directory to `frontend`
-
-3. **Configure Environment Variables**
-   In project settings, add:
-
-   ```
-   REACT_APP_API_URL=https://your-backend-app.railway.app/api
-   ```
-
-4. **Deploy**
-   - Vercel will automatically build and deploy
-   - Your frontend will be available at `https://your-app-name.vercel.app`
-
-### Option 2: Render (Full Stack) ⭐ **CURRENTLY DEPLOYED**
+1. **Go to Render Dashboard → Your Service → Environment**
+2. **Add missing environment variable:**
+   - Key: `MAIL_DEFAULT_SENDER`
+   - Value: `your-email@gmail.com` (same as MAIL_USERNAME)
+3. **Verify Gmail App Password:**
+   - MAIL_PASSWORD must be 16-character App Password, not regular password
+4. **Redeploy service** (Environment changes trigger automatic redeploy)
+5. **Test**: Visit `https://your-service.onrender.com/api/health`
 
 #### Backend on Render
 
@@ -82,7 +35,8 @@
    - Create a new PostgreSQL database in Render
    - Copy the database URL to your web service environment variables
 
-4. **Environment Variables**
+4. **Environment Variables** ⚠️ **CRITICAL FOR MAIL FUNCTIONALITY**
+
    ```
    DATABASE_URL=(automatically set by Render when you connect the database)
    SECRET_KEY=your-secret-key
@@ -93,9 +47,15 @@
    MAIL_SERVER=smtp.gmail.com
    MAIL_PORT=587
    MAIL_USERNAME=your-email@gmail.com
-   MAIL_PASSWORD=your-app-password
+   MAIL_PASSWORD=your-gmail-app-password
    MAIL_DEFAULT_SENDER=your-email@gmail.com
    ```
+
+   **⚠️ IMPORTANT**: For Gmail, you MUST use an App Password, not your regular password:
+
+   - Enable 2-Factor Authentication on Gmail
+   - Generate App Password: Google Account → Security → 2-Step Verification → App passwords
+   - Use the 16-character app password as `MAIL_PASSWORD`
 
 #### Frontend on Render
 
@@ -134,9 +94,8 @@
 4. **Environment Variables**: Never commit actual environment variables to your repository. Use the deployment platform's environment variable settings.
 
 5. **Free Tier Limitations**:
-   - Railway: 512MB RAM, $5/month credit (usually enough for small apps)
    - Render: Apps sleep after 15 minutes of inactivity on free tier
-   - Vercel: Unlimited static deployments
+   - Consider upgrading for production use with high traffic
 
 ### Recent Database Fix (November 2025)
 
@@ -164,6 +123,51 @@
 
 ### Troubleshooting
 
+#### Mail Not Sending & 502 Errors on Render 🚨
+
+**Common Issues & Solutions:**
+
+1. **Missing MAIL_DEFAULT_SENDER Environment Variable**
+
+   - Go to Render Dashboard → Your Service → Environment
+   - Add: `MAIL_DEFAULT_SENDER` = `your-email@gmail.com`
+   - **This is often the cause of 502 errors**
+
+2. **Gmail App Password Required**
+
+   - Regular Gmail password won't work
+   - Must use 16-character App Password
+   - Enable 2FA first, then generate App Password
+
+3. **Check Service Health**
+
+   - Visit: `https://your-service.onrender.com/api/health`
+   - Should show mail configuration status
+   - Look for "mail": "configured" in response
+
+4. **View Render Logs**
+
+   - Go to Render Dashboard → Your Service → Logs
+   - Look for mail-related errors
+   - Check for "Error sending email" messages
+
+5. **Render Free Tier SMTP Limitations**
+   - Some free tiers may block SMTP
+   - Consider upgrading to paid tier
+   - Or use email service like SendGrid
+
+**Quick Diagnostic Steps:**
+
+```bash
+# Test your service health
+curl https://your-service.onrender.com/api/health
+
+# Test registration (should send OTP email)
+curl -X POST https://your-service.onrender.com/api/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"test123"}'
+```
+
 #### Database Issues on Render
 
 If you encounter "relation 'user' does not exist" errors:
@@ -183,17 +187,45 @@ If you encounter "relation 'user' does not exist" errors:
    - Ensure your PostgreSQL database is connected to your web service
    - Check that `DATABASE_URL` environment variable is set automatically
 
-#### Other Common Issues
+#### Other Common Issues on Render
+
+- **502 Bad Gateway**: Usually caused by missing environment variables or SMTP timeouts
+
+  - Check all environment variables are set correctly
+  - Verify MAIL_DEFAULT_SENDER is configured
+  - Check service logs for timeout errors
 
 - **CORS errors**: Check that your frontend URL is allowed in CORS settings
+
+  - Backend automatically allows all origins in development
+  - For production, update CORS settings if needed
+
 - **Database errors**: Verify DATABASE_URL is correctly set
-- **Email not working**: Check Gmail app password and SMTP settings
-- **App sleeping**: Free tiers often sleep - consider upgrading for production use
+
+  - Should be automatically set when PostgreSQL database is connected
+  - Check connection in Render dashboard
+
+- **Email not working**:
+
+  - Verify Gmail App Password (not regular password)
+  - Check MAIL_DEFAULT_SENDER environment variable
+  - Test with `/api/health` endpoint
+  - Consider using SendGrid for production
+
+- **App sleeping**: Render free tier sleeps after 15 minutes of inactivity
+
+  - First request after sleep may be slow
+  - Consider upgrading for production use
+
+- **Build failures**:
+  - Check Python version matches `runtime.txt`
+  - Verify all dependencies in `requirements.txt`
+  - Check build logs in Render dashboard
 
 ### Custom Domain (Optional)
 
-Both Railway and Vercel allow custom domains on free tiers:
+Render allows custom domains on free tiers:
 
-- Add your domain in the platform's dashboard
+- Add your domain in the Render dashboard
 - Update DNS records as instructed
 - SSL certificates are automatically provided
