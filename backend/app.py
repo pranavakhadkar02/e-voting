@@ -66,7 +66,7 @@ class User(db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     otp = db.Column(db.String(6))
     otp_expires = db.Column(db.DateTime)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Candidate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -80,7 +80,7 @@ class Vote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     candidate_id = db.Column(db.Integer, db.ForeignKey('candidate.id'), nullable=False)
-    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 # Utility functions
 def is_valid_email(email):
@@ -134,7 +134,7 @@ def register():
     
     # Generate OTP
     otp = generate_otp()
-    otp_expires = datetime.now(timezone.utc) + timedelta(minutes=10)
+    otp_expires = datetime.utcnow() + timedelta(minutes=10)
     
     user = User(
         email=email,
@@ -171,7 +171,7 @@ def verify_otp():
     if user.is_verified:
         return jsonify({'error': 'User already verified'}), 400
     
-    if not user.otp or user.otp_expires < datetime.now(timezone.utc):
+    if not user.otp or user.otp_expires < datetime.utcnow():
         return jsonify({'error': 'OTP expired'}), 400
     
     if user.otp != otp:
@@ -247,7 +247,7 @@ def resend_otp():
     
     # Generate new OTP
     otp = generate_otp()
-    otp_expires = datetime.now(timezone.utc) + timedelta(minutes=10)
+    otp_expires = datetime.utcnow() + timedelta(minutes=10)
     
     user.otp = otp
     user.otp_expires = otp_expires
