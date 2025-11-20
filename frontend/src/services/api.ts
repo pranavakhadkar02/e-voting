@@ -124,6 +124,24 @@ export const adminAPI = {
     const response = await api.post('/admin/candidates', candidateData);
     return response.data;
   },
+
+  updateCandidate: async (
+    candidateId: number,
+    candidateData: {
+      name: string;
+      party: string;
+      description: string;
+      image_url: string;
+    }
+  ) => {
+    const response = await api.put(`/admin/candidates/${candidateId}`, candidateData);
+    return response.data;
+  },
+
+  deleteCandidate: async (candidateId: number) => {
+    const response = await api.delete(`/admin/candidates/${candidateId}`);
+    return response.data;
+  },
 };
 
 export default api;

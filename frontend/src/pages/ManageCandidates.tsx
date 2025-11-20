@@ -11,6 +11,7 @@ const ManageCandidates: React.FC = () => {
   const [candidates, setCandidates] = useState<CandidateWithVotes[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingCandidate, setEditingCandidate] = useState<CandidateWithVotes | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     party: '',
@@ -18,6 +19,7 @@ const ManageCandidates: React.FC = () => {
     image_url: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState<number | null>(null);
 
   useEffect(() => {
     fetchCandidates();
@@ -44,15 +46,59 @@ const ManageCandidates: React.FC = () => {
 
     setSubmitting(true);
     try {
-      await adminAPI.addCandidate(formData);
-      toast.success('Candidate added successfully!');
-      setFormData({ name: '', party: '', description: '', image_url: '' });
-      setShowAddForm(false);
+      if (editingCandidate) {
+        await adminAPI.updateCandidate(editingCandidate.id, formData);
+        toast.success('Candidate updated successfully!');
+      } else {
+        await adminAPI.addCandidate(formData);
+        toast.success('Candidate added successfully!');
+      }
+      resetForm();
       fetchCandidates();
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to add candidate');
+      toast.error(
+        error.response?.data?.error || `Failed to ${editingCandidate ? 'update' : 'add'} candidate`
+      );
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({ name: '', party: '', description: '', image_url: '' });
+    setShowAddForm(false);
+    setEditingCandidate(null);
+  };
+
+  const handleEdit = (candidate: CandidateWithVotes) => {
+    setFormData({
+      name: candidate.name,
+      party: candidate.party,
+      description: candidate.description,
+      image_url: candidate.image_url || '',
+    });
+    setEditingCandidate(candidate);
+    setShowAddForm(true);
+  };
+
+  const handleDelete = async (candidate: CandidateWithVotes) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete ${candidate.name}?\n\nThis action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    setDeleting(candidate.id);
+    try {
+      await adminAPI.deleteCandidate(candidate.id);
+      toast.success('Candidate deleted successfully!');
+      fetchCandidates();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to delete candidate');
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -81,16 +127,27 @@ const ManageCandidates: React.FC = () => {
         <div className="col-12">
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h5 className="text-muted mb-0">Candidate Management System</h5>
-            <button className="btn btn-primary" onClick={() => setShowAddForm(!showAddForm)}>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                if (showAddForm) {
+                  resetForm();
+                } else {
+                  setShowAddForm(true);
+                }
+              }}
+            >
               {showAddForm ? '✕ Cancel' : '+ Add New Candidate'}
             </button>
           </div>
 
-          {/* Add Candidate Form */}
+          {/* Add/Edit Candidate Form */}
           {showAddForm && (
             <div className="card mb-4">
               <div className="card-header">
-                <h5 className="mb-0">Add New Candidate</h5>
+                <h5 className="mb-0">
+                  {editingCandidate ? `Edit ${editingCandidate.name}` : 'Add New Candidate'}
+                </h5>
               </div>
               <div className="card-body">
                 <form onSubmit={handleSubmit}>
@@ -158,17 +215,15 @@ const ManageCandidates: React.FC = () => {
                       {submitting ? (
                         <>
                           <span className="spinner-border spinner-border-sm me-2" />
-                          Adding...
+                          {editingCandidate ? 'Updating...' : 'Adding...'}
                         </>
+                      ) : editingCandidate ? (
+                        'Update Candidate'
                       ) : (
                         'Add Candidate'
                       )}
                     </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => setShowAddForm(false)}
-                    >
+                    <button type="button" className="btn btn-secondary" onClick={resetForm}>
                       Cancel
                     </button>
                   </div>
@@ -224,32 +279,28 @@ const ManageCandidates: React.FC = () => {
                               <button
                                 type="button"
                                 className="btn btn-outline-primary btn-sm"
-                                onClick={() => {
-                                  setFormData({
-                                    name: candidate.name,
-                                    party: candidate.party,
-                                    description: candidate.description,
-                                    image_url: candidate.image_url || '',
-                                  });
-                                  setShowAddForm(true);
-                                }}
+                                onClick={() => handleEdit(candidate)}
+                                disabled={deleting === candidate.id}
                               >
                                 ✏️ Edit
                               </button>
                               <button
                                 type="button"
                                 className="btn btn-outline-danger btn-sm"
-                                onClick={() => {
-                                  if (
-                                    window.confirm(
-                                      `Are you sure you want to delete ${candidate.name}?`
-                                    )
-                                  ) {
-                                    toast.info('Delete functionality coming soon');
-                                  }
-                                }}
+                                onClick={() => handleDelete(candidate)}
+                                disabled={deleting === candidate.id}
                               >
-                                🗑️ Delete
+                                {deleting === candidate.id ? (
+                                  <>
+                                    <span
+                                      className="spinner-border spinner-border-sm me-1"
+                                      style={{ width: '12px', height: '12px' }}
+                                    />
+                                    Deleting...
+                                  </>
+                                ) : (
+                                  '🗑️ Delete'
+                                )}
                               </button>
                             </div>
                           </div>

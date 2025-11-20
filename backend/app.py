@@ -417,6 +417,64 @@ def get_all_candidates():
         print(f"Error in get_all_candidates: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
+@app.route('/api/admin/candidates/<int:candidate_id>', methods=['PUT'])
+@jwt_required()
+def update_candidate(candidate_id):
+    try:
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        
+        if not user or not user.is_admin:
+            return jsonify({'error': 'Admin access required'}), 403
+        
+        candidate = Candidate.query.get(candidate_id)
+        if not candidate:
+            return jsonify({'error': 'Candidate not found'}), 404
+        
+        data = request.get_json()
+        
+        if not data or not data.get('name') or not data.get('party'):
+            return jsonify({'error': 'Name and party are required'}), 400
+        
+        candidate.name = data['name']
+        candidate.party = data['party']
+        candidate.description = data.get('description', '')
+        candidate.image_url = data.get('image_url', 'https://via.placeholder.com/150')
+        
+        db.session.commit()
+        
+        return jsonify({'message': 'Candidate updated successfully'}), 200
+    except Exception as e:
+        print(f"Error in update_candidate: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/admin/candidates/<int:candidate_id>', methods=['DELETE'])
+@jwt_required()
+def delete_candidate(candidate_id):
+    try:
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        
+        if not user or not user.is_admin:
+            return jsonify({'error': 'Admin access required'}), 403
+        
+        candidate = Candidate.query.get(candidate_id)
+        if not candidate:
+            return jsonify({'error': 'Candidate not found'}), 404
+        
+        # Check if candidate has votes
+        vote_count = Vote.query.filter_by(candidate_id=candidate_id).count()
+        if vote_count > 0:
+            return jsonify({'error': 'Cannot delete candidate with existing votes'}), 400
+        
+        db.session.delete(candidate)
+        db.session.commit()
+        
+        return jsonify({'message': 'Candidate deleted successfully'}), 200
+    except Exception as e:
+        print(f"Error in delete_candidate: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 @app.route('/api/user/profile', methods=['GET'])
 @jwt_required()
 def get_profile():
@@ -436,39 +494,13 @@ def get_profile():
         }
     }), 200
 
-# Initialize database and add sample data
+# Initialize database
 def init_db():
     with app.app_context():
         db.create_all()
         
-        # Add sample candidates if none exist
-        if Candidate.query.count() == 0:
-            candidates = [
-                {
-                    'name': 'Alice Johnson',
-                    'party': 'Progressive Party',
-                    'description': 'Focused on education reform and environmental protection.',
-                    'image_url': 'https://via.placeholder.com/150'
-                },
-                {
-                    'name': 'Bob Smith',
-                    'party': 'Unity Party',
-                    'description': 'Advocating for economic growth and healthcare improvements.',
-                    'image_url': 'https://via.placeholder.com/150'
-                },
-                {
-                    'name': 'Carol Davis',
-                    'party': 'Future Party',
-                    'description': 'Champion of technology innovation and social equality.',
-                    'image_url': 'https://via.placeholder.com/150'
-                }
-            ]
-            
-            for candidate_data in candidates:
-                candidate = Candidate(**candidate_data)
-                db.session.add(candidate)
-            
-            # Create admin user
+        # Create default admin user if none exists
+        if not User.query.filter_by(is_admin=True).first():
             admin_user = User(
                 email='admin@evoting.com',
                 password_hash=generate_password_hash('admin123'),
@@ -476,10 +508,11 @@ def init_db():
                 is_admin=True
             )
             db.session.add(admin_user)
-            
             db.session.commit()
-            print("Database initialized with sample data")
+            print("Database initialized with default admin user")
             print("Admin login: admin@evoting.com / admin123")
+        else:
+            print("Database initialized")
 
 if __name__ == '__main__':
     init_db()
