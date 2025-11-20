@@ -1,0 +1,47 @@
+# Backend Python/Flask Specific Ignores
+
+# Environment Variables (CRITICAL - Contains sensitive data)
+.env
+.env.local
+.env.development
+.env.production
+
+# Database Files (Contains user data and votes)
+*.db
+*.sqlite
+*.sqlite3
+evoting.db
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Flask Session Files
+flask_session/
+
+# Email Configuration (if using file-based config)
+email_config.py
+
+# SSL Certificates (if any)
+*.pem
+*.key
+*.crt
+
+# Backup Files
+*.backup
+*.bak
+
+# Logs
+*.log
+logs/
+
+# Instance folder (Flask)
+instance/
